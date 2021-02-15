@@ -15,6 +15,7 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+ASGI_APPLICATION = 'project_couch.asgi.application'
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
@@ -37,8 +38,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'channels',
     'main_menu',
-    'demo_game',
+    'games.demo_game',
 ]
 
 MIDDLEWARE = [
@@ -61,7 +63,8 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [os.path.join(BASE_DIR, 'main_menu', 'templates'),
-                 os.path.join(BASE_DIR, 'demo_game', 'templates'),],
+                 os.path.join(BASE_DIR, 'games', 'templates'),
+                 os.path.join(BASE_DIR, 'project_couch', 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -140,7 +143,12 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
-STATIC_ROOT = ''
+STATIC_ROOT = os.path.join(BASE_DIR, "static/")
+
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'project_couch', 'static'),
+    os.path.join(BASE_DIR, 'main_menu', 'static'),
+]
 
 STATIC_URL = '/static/'
 

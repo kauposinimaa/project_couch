@@ -1,0 +1,3 @@
+Django
+psycopq2
+sockets

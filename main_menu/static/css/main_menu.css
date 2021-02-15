@@ -11,20 +11,19 @@ body {
 }
 
 div.buttonbox {
-    height: 8vw;
-    min-height: 0px;
-    width: 8vw;
-    min-width: 0px;
+    height: 8vh;
+    min-height: 100px;
+    width: 90%;
+    min-width: 500px;
     color: #000000;
 
     border-radius: 4px;
-    box-shadow: #000000 1vw 1vw;
+    box-shadow: #000000 0.2vw 0.2vw;
     border-color: #000000;
     border-style: solid;
     border-width: 0.15vw;
     transition: transform 0.5s;
-    text-align: center;
-    line-height: 7vw;
+
 
 }
 div.buttonbox.yellow {
@@ -40,16 +39,12 @@ div.buttonbox.red {
     color: #000000;
 }
 
-div.buttonbox h4 {
-    position: relative;
-    font-size: 2vw;
-    padding-top: 2.4vw;
-}
-
 div.buttonbox:hover {
     -webkit-transform: scale(0.9);
     transform: scale(0.9);
+    text-decoration: none;
 }
+
 .spinner-border.big {
     width: 5vw;
     height: 5vw;
@@ -57,5 +52,10 @@ div.buttonbox:hover {
     top: 50%;
     margin-top: -2.5vw;
     font-size: 2vw;
+}
+
+a.no-underline,
+u.no-underline {
+    text-decoration: none !important;
 }
 
