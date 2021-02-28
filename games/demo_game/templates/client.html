@@ -1,0 +1,20 @@
+{% extends "demo_game_base.html" %}
+
+{% block custom_css %}
+
+{% endblock %}
+
+{% block custom_js %}
+<script>
+    const wsUrl = '{{ wsUrl }}';
+    const playerName = '{{ player_name }}';
+</script>
+<script src="../static/js/client.js"></script>
+{% endblock %}
+
+{% block content %}
+<h3>Client</h3>
+<div class="joinbox yellow p-5" id="waitbox">
+    <h3>Waiting for the game to start...</h3>
+</div>
+{% endblock %}

@@ -1,3 +1,6 @@
 from django.db import models
 
-# Create your models here.
+
+class ActiveGames(models.Model):
+    game_name = models.CharField(max_length=255)
+    room_code = models.CharField(max_length=5)

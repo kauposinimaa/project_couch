@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>{% trans 'Homepage' %}</title>
+    <title>{% trans 'Demo game' %}</title>
 
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css"
@@ -24,9 +24,17 @@
             crossorigin="anonymous"></script>
 
     <link rel="stylesheet" type="text/css" href="../static/css/demo_game.css">
-    <script src="../static/js/demo_game.js"></script>
+    {% block custom_css %}{% endblock %}
+    <script>
+        var speed = {{ color_change_speed }};
+        var isRainbow = Boolean({{ rainbow_colors }});
+    </script>
+    <script src="{% static 'js/global.js' %}"></script>
+    <script src="{% static 'js/rainbow_background.js' %}"></script>
+    {% block custom_js %}{% endblock %}
+
 </head>
 <body>
-
+{% block content %}{% endblock %}
 </body>
 </html>

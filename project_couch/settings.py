@@ -16,6 +16,14 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 ASGI_APPLICATION = 'project_couch.asgi.application'
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    },
+}
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
@@ -26,21 +34,24 @@ SECRET_KEY = 's)59t)ui0v9ievit3y*=qh@o0kiupmuzc2y-#91@-%v57$%um^'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    '127.0.0.1',
+    '192.168.1.160',
+]
 
 
 # Application definition
 
 INSTALLED_APPS = [
+    'channels',
+    'main_menu',
+    'games.demo_game',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'channels',
-    'main_menu',
-    'games.demo_game',
 ]
 
 MIDDLEWARE = [
@@ -79,6 +90,8 @@ TEMPLATES = [
                 'django.template.context_processors.csrf',
                 'django.template.context_processors.tz',
                 'django.template.context_processors.static',
+                'main_menu.context_processors.background_settings',
+                'games.demo_game.context_processors.background_settings',
             ],
         },
     },
