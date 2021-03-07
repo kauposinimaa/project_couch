@@ -4,7 +4,8 @@ from django.http import JsonResponse
 import importlib
 from django.utils.translation import gettext as _
 import games
-from .models import ActiveGames
+from .models import ActiveGames, ActivePlayers
+
 
 def game_selection(request):
     """
@@ -51,4 +52,3 @@ def connect_to_game(request):
         return JsonResponse({'detail': 'Game not found'}, status='400')
 
     return JsonResponse({'redirectUrl': f'/{active_game.game_name}/join'}, status='200')
-

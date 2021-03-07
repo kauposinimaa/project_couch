@@ -1,8 +1,11 @@
+from games import demo_game
 
 
-def background_settings(request):
-
+def server_settings(request):
     return {
-        'color_change_speed': 2000,
-        'rainbow_colors': 'true',
+        demo_game.slug: {
+            'name': demo_game.name,
+            'url': demo_game.url,
+            'description': demo_game.description,
+        }
     }

@@ -25,6 +25,8 @@ CHANNEL_LAYERS = {
     },
 }
 
+GAME_HOST_NAME = 'host'
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
@@ -35,6 +37,7 @@ SECRET_KEY = 's)59t)ui0v9ievit3y*=qh@o0kiupmuzc2y-#91@-%v57$%um^'
 DEBUG = True
 
 ALLOWED_HOSTS = [
+    '0.0.0.0',
     '127.0.0.1',
     '192.168.1.160',
 ]
@@ -52,6 +55,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'disable_cache_headers.apps.DisableCacheHeadersConfig',
 ]
 
 MIDDLEWARE = [
@@ -62,6 +66,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'disable_cache_headers.middleware.DisableCacheControl',
 ]
 
 ROOT_URLCONF = 'project_couch.urls'
@@ -90,8 +95,10 @@ TEMPLATES = [
                 'django.template.context_processors.csrf',
                 'django.template.context_processors.tz',
                 'django.template.context_processors.static',
+                'project_couch.context_processors.host_settings',
                 'main_menu.context_processors.background_settings',
-                'games.demo_game.context_processors.background_settings',
+                'games.demo_game.context_processors.server_settings',
+
             ],
         },
     },

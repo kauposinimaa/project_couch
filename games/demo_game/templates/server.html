@@ -6,9 +6,10 @@
 
 {% block custom_js %}
 <script>
-    const wsUrl = '{{ wsUrl }}';
+    const wsUrl = '{{ ws_url }}';
     const gameName = '{{ game_name }}';
     const roomCode = '{{ room_code }}';
+    const host_name = '{{ host_name }}';
 </script>
 <script src="../static/js/server.js"></script>
 {% endblock %}
@@ -17,7 +18,7 @@
 <h3>Server</h3>
 <div class="container">
     <div class="row">
-        <div class="joinbox yellow p-5" id="waitbox">
+        <div class="joinbox yellow p-5" id="game-box">
             <h3>Room Code: {{ room_code|upper }}</h3>
             <h3>Players currently: <span id="player-amount">0</span></h3>
             <button type="button" id="start-game" name="start-game">Start game</button>
