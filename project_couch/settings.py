@@ -48,7 +48,6 @@ ALLOWED_HOSTS = [
 INSTALLED_APPS = [
     'channels',
     'main_menu',
-    'games.demo_game',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -56,6 +55,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'disable_cache_headers.apps.DisableCacheHeadersConfig',
+
 ]
 
 MIDDLEWARE = [
@@ -67,6 +67,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'disable_cache_headers.middleware.DisableCacheControl',
+
 ]
 
 ROOT_URLCONF = 'project_couch.urls'
@@ -97,7 +98,6 @@ TEMPLATES = [
                 'django.template.context_processors.static',
                 'project_couch.context_processors.host_settings',
                 'main_menu.context_processors.background_settings',
-                'games.demo_game.context_processors.server_settings',
 
             ],
         },
@@ -168,6 +168,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static/")
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'project_couch', 'static'),
     os.path.join(BASE_DIR, 'main_menu', 'static'),
+    os.path.join(BASE_DIR, 'games', 'static'),
 ]
 
 STATIC_URL = '/static/'
@@ -176,6 +177,10 @@ MEDIA_ROOT = ''
 
 MEDIA_URL = '/media/'
 
+FIRST_DAY_OF_WEEK = 1  # Monday
 
-FIRST_DAY_OF_WEEK = 1
-
+import importlib
+import games
+game_modules = [f'games.{item}' for item in os.listdir(os.path.dirname(games.__file__)) if not item.startswith("__")]
+for module_str in game_modules:
+    INSTALLED_APPS.append(module_str)

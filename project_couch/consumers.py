@@ -3,18 +3,17 @@ from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 from django.conf import settings
 from project_couch import events, status
-from main_menu.models import ActiveGames
+from main_menu import models
+from main_menu import views
 
 
 class GameConsumer(WebsocketConsumer):
 
     def connect(self):
-        room_code = self.scope['url_route']['kwargs']['room_code']
-        game_name = self.scope['url_route']['kwargs']['game_name']
-        self.room_group_code = f'{game_name}_{room_code}'
-        try:
-            active_game = ActiveGames.objects.get(room_code=room_code, game_name=game_name)
-        except ActiveGames.DoesNotExist:
+        player_name = self.scope['url_route']['kwargs']['player_name']
+
+        is_player_allowed = self.do_event(events.PLAYER_JOINED)
+        if not is_player_allowed:
             self.close()
             return
 
@@ -26,7 +25,6 @@ class GameConsumer(WebsocketConsumer):
 
         self.accept()
 
-        player_name = self.scope['url_route']['kwargs']['player_name']
         if not player_name == settings.GAME_HOST_NAME:  # Don't send event if host connected
             async_to_sync(self.channel_layer.group_send)(
                 self.room_group_code,
@@ -36,7 +34,7 @@ class GameConsumer(WebsocketConsumer):
                     'event': events.PLAYER_JOINED,
                     'data': {
                         'playerName': player_name,
-                        'gameStatus': active_game.status,
+                        'gameStatus': self.room_status,
                     },
                 }
             )
@@ -60,6 +58,8 @@ class GameConsumer(WebsocketConsumer):
             }
         )
 
+        self.do_event(events.PLAYER_DISCONNECTED)
+
         if player_name == settings.GAME_HOST_NAME:
             async_to_sync(self.channel_layer.group_send)(
                 self.room_group_code,
@@ -71,11 +71,15 @@ class GameConsumer(WebsocketConsumer):
                 }
             )
 
+            self.do_event(events.GAME_CLOSED)
+
     def receive(self, text_data):
         text_data_json = json.loads(text_data)
         sender = text_data_json.get('sender')
         event = text_data_json.get('event')
         data = text_data_json.get('data')
+
+        self.do_event(event, data)
 
         # Send message to room group
         async_to_sync(self.channel_layer.group_send)(
@@ -100,3 +104,57 @@ class GameConsumer(WebsocketConsumer):
             'event': event,
             'data': data,
         }))
+
+    def do_event(self, event, data=None):
+        if data is None:
+            data = {}
+        room_code = self.scope['url_route']['kwargs']['room_code'].lower()
+        game_name = self.scope['url_route']['kwargs']['game_name']
+        active_game = models.ActiveGames.objects.get(room_code=room_code, game_name=game_name)
+        player_name = self.scope['url_route']['kwargs']['player_name']
+
+        if event == events.START_GAME:
+            active_game.status = status.IN_GAME
+            active_game.data['options'].update(data)
+            active_game.data['active_players'] = active_game.data['joined_players']
+            active_game.save()
+
+        if event == events.PLAYER_DISCONNECTED:
+            game_is_running = active_game.status == status.IN_GAME
+            active_players = active_game.data['active_players']
+            joined_players = active_game.data['joined_players']
+
+            if game_is_running:
+                if player_name in active_players:
+                    active_game.data['active_players'].remove(player_name)
+            else:
+                if player_name in joined_players:
+                    active_game.data['joined_players'].remove(player_name)
+
+            active_game.save()
+
+        if event == events.PLAYER_JOINED:
+            game_is_running = active_game.status == status.IN_GAME
+            allow_new_players = active_game.data['options']['allow_new_players']
+            active_players = active_game.data['active_players']
+            joined_players = active_game.data['joined_players']
+
+            if game_is_running:
+                if not allow_new_players and player_name not in joined_players:
+                    return False
+                if player_name in active_players:
+                    return False
+                active_game.data['active_players'].append(player_name)
+            else:
+                if player_name in joined_players:
+                    return False
+                active_game.data['joined_players'].append(player_name)
+
+            active_game.save()
+            self.room_group_code = f'{game_name}_{room_code}'
+            self.room_status = active_game.status
+            return True
+
+        if event == events.GAME_CLOSED:
+            active_game.status = status.NOT_ACTIVE
+            active_game.save()

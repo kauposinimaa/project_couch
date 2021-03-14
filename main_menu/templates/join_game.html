@@ -5,7 +5,7 @@
 {% endblock %}
 
 {% block custom_js %}
-<script src="../static/js/join_game.js"></script>
+<script type="module" src="../static/js/join_game.js"></script>
 {% endblock %}
 
 {% block content %}
@@ -15,15 +15,16 @@
                 <form id="join-form">
                     <div class="form-group">
                         <label>Room code</label>
-                        <input type="text" class="form-control" id="room-code" name="room-code">
+                        <input type="text" class="form-control" id="room-code" name="room-code" required>
                     </div>
 
                     <div class="form-group">
                         <label>Player name</label>
-                        <input type="text" class="form-control" id="player-name" name="player-name">
+                        <input type="text" class="form-control" id="player-name" name="player-name" required>
                     </div>
                     <button type="submit" id="join-room" name="join-room">Join room</button>
                 </form>
+                <p class="text-danger mt-4" id="join-errors"></p>
             </div>
 
     </div>
