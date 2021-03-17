@@ -25,7 +25,7 @@ CHANNEL_LAYERS = {
     },
 }
 
-GAME_HOST_NAME = 'host'
+HOST_NAME = 'host'
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/

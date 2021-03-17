@@ -10,10 +10,7 @@ from main_menu import views
 class GameConsumer(WebsocketConsumer):
 
     def connect(self):
-        player_name = self.scope['url_route']['kwargs']['player_name']
-
-        is_player_allowed = self.do_event(events.PLAYER_JOINED)
-        if not is_player_allowed:
+        if not self.do_event(events.PLAYER_JOINED):
             self.close()
             return
 
@@ -25,15 +22,15 @@ class GameConsumer(WebsocketConsumer):
 
         self.accept()
 
-        if not player_name == settings.GAME_HOST_NAME:  # Don't send event if host connected
+        if not self.player_name == settings.HOST_NAME:  # Don't send event if host connected
             async_to_sync(self.channel_layer.group_send)(
                 self.room_group_code,
                 {
                     'type': 'send_data',
-                    'sender': settings.GAME_HOST_NAME,
+                    'sender': settings.HOST_NAME,
                     'event': events.PLAYER_JOINED,
                     'data': {
-                        'playerName': player_name,
+                        'playerName': self.player_name,
                         'gameStatus': self.room_status,
                     },
                 }
@@ -50,7 +47,7 @@ class GameConsumer(WebsocketConsumer):
             self.room_group_code,
             {
                 'type': 'send_data',
-                'sender': settings.GAME_HOST_NAME,
+                'sender': settings.HOST_NAME,
                 'event': events.PLAYER_DISCONNECTED,
                 'data': {
                     'playerName': player_name,
@@ -60,12 +57,12 @@ class GameConsumer(WebsocketConsumer):
 
         self.do_event(events.PLAYER_DISCONNECTED)
 
-        if player_name == settings.GAME_HOST_NAME:
+        if player_name == settings.HOST_NAME:
             async_to_sync(self.channel_layer.group_send)(
                 self.room_group_code,
                 {
                     'type': 'send_data',
-                    'sender': settings.GAME_HOST_NAME,
+                    'sender': settings.HOST_NAME,
                     'event': events.GAME_CLOSED,
                     'data': {},
                 }
@@ -111,7 +108,7 @@ class GameConsumer(WebsocketConsumer):
         room_code = self.scope['url_route']['kwargs']['room_code'].lower()
         game_name = self.scope['url_route']['kwargs']['game_name']
         active_game = models.ActiveGames.objects.get(room_code=room_code, game_name=game_name)
-        player_name = self.scope['url_route']['kwargs']['player_name']
+        self.player_name = self.scope['url_route']['kwargs']['player_name']
 
         if event == events.START_GAME:
             active_game.status = status.IN_GAME
@@ -125,11 +122,11 @@ class GameConsumer(WebsocketConsumer):
             joined_players = active_game.data['joined_players']
 
             if game_is_running:
-                if player_name in active_players:
-                    active_game.data['active_players'].remove(player_name)
+                if self.player_name in active_players:
+                    active_game.data['active_players'].remove(self.player_name)
             else:
-                if player_name in joined_players:
-                    active_game.data['joined_players'].remove(player_name)
+                if self.player_name in joined_players:
+                    active_game.data['joined_players'].remove(self.player_name)
 
             active_game.save()
 
@@ -140,15 +137,15 @@ class GameConsumer(WebsocketConsumer):
             joined_players = active_game.data['joined_players']
 
             if game_is_running:
-                if not allow_new_players and player_name not in joined_players:
+                if not allow_new_players and self.player_name not in joined_players:
                     return False
-                if player_name in active_players:
+                if self.player_name in active_players:
                     return False
-                active_game.data['active_players'].append(player_name)
+                active_game.data['active_players'].append(self.player_name)
             else:
-                if player_name in joined_players:
+                if self.player_name in joined_players:
                     return False
-                active_game.data['joined_players'].append(player_name)
+                active_game.data['joined_players'].append(self.player_name)
 
             active_game.save()
             self.room_group_code = f'{game_name}_{room_code}'

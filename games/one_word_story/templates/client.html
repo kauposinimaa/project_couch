@@ -5,16 +5,12 @@
 {% endblock %}
 
 {% block custom_js %}
-<script>
-    const wsUrl = '{{ ws_url }}';
-    const playerName = '{{ player_name }}';
-</script>
 <script src="../static/js/client.js"></script>
 {% endblock %}
 
 {% block content %}
 <h3>{{ player_name }}</h3>
-<div class="joinbox yellow p-5" id="game-box">
+<div class="gamebox yellow p-5" id="game-box">
     <h3>Waiting for the game to start...</h3>
 </div>
 {% endblock %}

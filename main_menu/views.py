@@ -1,5 +1,3 @@
-import random
-import string
 from django.template.loader import get_template
 from django.template.response import TemplateResponse
 from django.http import JsonResponse
@@ -11,10 +9,10 @@ from .models import ActiveGames
 from project_couch import status
 
 
+# Pages
+
+# Main menu page for game selection
 def game_selection(request):
-    """
-    Shows main menu
-    """
     game_modules = [f'games.{item}' for item in os.listdir(os.path.dirname(games.__file__)) if not item.startswith("__")]
 
     available_games = []
@@ -34,6 +32,7 @@ def game_selection(request):
     return response
 
 
+# Join page for clients to connect
 def join_game(request):
     return TemplateResponse(
         request,
@@ -42,6 +41,9 @@ def join_game(request):
     )
 
 
+# API endpoints
+
+# Connects client to game
 def connect_to_game(request):
     room_code = request.GET.get('roomCode').lower()
     player_name = request.GET.get('playerName')
@@ -54,42 +56,3 @@ def connect_to_game(request):
         return JsonResponse({'detail': 'Game not found'}, status='400')
 
     return JsonResponse({'redirectUrl': f'/{active_game.game_name}/'}, status='200')
-
-
-def create_room(game_name):
-    letters = string.ascii_lowercase
-    room_code = ''.join(random.choice(letters) for _ in range(5)).lower()
-
-    active_games = ActiveGames(game_name=game_name, room_code=room_code)
-    active_games.save()
-
-    return room_code
-
-
-def close_room(game_name, room_code):
-    try:
-        active_game = ActiveGames.objects.get(game_name=game_name, room_code=room_code)
-        active_game.delete()
-        return True
-    except ActiveGames.DoesNotExist:
-        return False
-
-
-def change_room_state(game_name, room_code, state):
-    try:
-        active_game = ActiveGames.objects.get(game_name=game_name, room_code=room_code)
-        active_game.status = state
-        active_game.save()
-        return True
-    except ActiveGames.DoesNotExist:
-        return False
-
-
-def change_room_data(game_name, room_code, data):
-    try:
-        active_game = ActiveGames.objects.get(game_name=game_name, room_code=room_code)
-        active_game.data.update(data)
-        active_game.save()
-        return True
-    except ActiveGames.DoesNotExist:
-        return False
