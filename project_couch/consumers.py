@@ -31,7 +31,6 @@ class GameConsumer(WebsocketConsumer):
                     'event': events.PLAYER_JOINED,
                     'data': {
                         'playerName': self.player_name,
-                        'gameStatus': self.room_status,
                     },
                 }
             )

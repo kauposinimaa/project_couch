@@ -2,60 +2,96 @@ $(document).ready(function() {
 
     // Constants
     const $body = $("body");
-    const gameBox = new GameBox();
-    const $gameBox = gameBox.$box;
+    const host = new OWSHost(true);
+    const $host = host.box;
+    host.showLobby().then(() => {
+        host.startBtn.on('click', (event) => {
+            webSocket.send(JSON.stringify({
+                sender: playerName,
+                event: 'start_game',
+                data: {
+                    allowNewPlayers: false,
+                },
+            }));
+        });
+    });
+
     const webSocket = new WebSocket(
         'ws://' + window.location.host + '/' + gameName + '/' + roomCode + '/' + playerName);
 
-    const $playerCounter = $("#player-amount");
-    gameBox.showLobby();
-
-
     // Variables
-    let playerCount = 0;
-    let playerNames = [];
-    let currentPlayerCount = 0;
+    let playerIndex = 1
+    function getNextPlayer() {
+        return new Promise((resolve, reject) => {
+            makeFetch({
+                url: '/active_players',
+                method: 'GET',
+                data: {
+                    roomCode: roomCode,
+                    gameName: gameName,
+                },
+            }).then((response) => {
+                console.log(response);
+                let index;
+                if(playerIndex < response.activePlayers.length) {
+                    index = playerIndex;
+                    playerIndex++;
+                }
+                else {
+                    index = 1;
+                    playerIndex = index + 1;
+                }
+                console.log(index);
+                console.log(playerIndex);
+                resolve(response.activePlayers[index]);
+
+            })
+        })
+
+    }
 
     // Events
-    $gameBox.on('player_joined', (event, data) => {
-        playerCount++;
-        $playerCounter.html(playerCount);
-        gameBox.addNewPlayer(data.playerName);
-        playerNames.push(data.playerName);
+    $host.on('player_joined', (event, data) => {
+        host.addNewPlayer(data.playerName);
         console.log(data.playerName + ' joined!');
     });
 
-    $gameBox.on('player_disconnected', (event, data) => {
-        playerCount--;
-        $playerCounter.html(playerCount);
-        let index = playerNames.indexOf(data.playerName)
-        index > -1 ? playerNames.splice(index, 1) : false;
+    $host.on('player_disconnected', (event, data) => {
+        host.removePlayer(data.playerName);
         console.log(data.playerName + ' left!');
     });
 
-    $gameBox.on('start_game', (event, data) => {
-        gameBox.showGame();
+    $host.on('start_game', () => {
+        host.startGame().then(() => {
+            getNextPlayer().then((name) => {
+                webSocket.send(JSON.stringify({
+                    sender: playerName,
+                    event: 'next_player',
+                    data: {
+                        playerName: name,
+                    },
+                }));
+            });
+        });
     });
 
-    $gameBox.on('word_added', (event, data) => {
+    $host.on('word_added', (event, data) => {
         let word = data.word;
         let isPunctuation = word.includes('.') || word.includes(',');
-        $("#current-progress").append(
-            isPunctuation ? word : (' ' + word)
-        );
+        host.addWord(isPunctuation ? word : (' ' + word));
 
-        currentPlayerCount = currentPlayerCount < playerNames.length-1 ? (currentPlayerCount+1) : 0;
-        webSocket.send(JSON.stringify({
-            sender: host_name,
-            event: 'next_player',
-            data: {
-                currentPlayer: playerNames[currentPlayerCount],
-            },
-        }));
-
+        getNextPlayer().then((name) => {
+            webSocket.send(JSON.stringify({
+                sender: playerName,
+                event: 'next_player',
+                data: {
+                    playerName: name,
+                },
+            }));
+        });
     });
 
-    $gameBox.on('game_closed', (event, data) => {
+    $host.on('game_closed', (event, data) => {
         console.log('Game closed!');
     });
 
@@ -65,7 +101,7 @@ $(document).ready(function() {
     webSocket.onmessage = function (event) {
         const message = JSON.parse(event.data);
         console.log(message);
-        $gameBox.trigger(message.event, [message.data]);
+        $host.trigger(message.event, [message.data]);
     };
 
     // webSocket.onerror = function (event) {
@@ -84,25 +120,5 @@ $(document).ready(function() {
     //             window.location.replace('/');
     //         }, countdown*1000);
     // }
-
-
-
-    // Events from frontend
-    $("#start-game").on('click', (event) => {
-        webSocket.send(JSON.stringify({
-            sender: host_name,
-            event: 'start_game',
-            data: {
-                allowNewPlayers: false,
-            },
-        }));
-        webSocket.send(JSON.stringify({
-            sender: host_name,
-            event: 'next_player',
-            data: {
-                currentPlayer: playerNames[currentPlayerCount],
-            },
-        }));
-    });
 
 });

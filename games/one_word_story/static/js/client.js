@@ -1,66 +1,51 @@
 $(document).ready(function() {
 
     // Constants
+    const $body = $("body");
+    const player = new OWSPlayer(true);
+    const $player = player.$box;
+    player.showWait('Waiting for the game to start');
+
     const webSocket = new WebSocket(
         'ws://' + window.location.host + '/' + gameName + '/' + roomCode + '/' + playerName);
-    const $body = $("body");
-    const $gameBox = $("#game-box");
 
     // Variables
 
 
     // Events
-    $gameBox.on('start_game', (event, data) => {
-        $gameBox.html('');
-        $gameBox.html('' +
-            '<div class="spinner-grow text-secondary" role="status">' +
-            '   <span class="sr-only">Loading...</span>' +
-            '</div>');
+    $player.on('start_game', (event, data) => {
+        player.startGame();
     });
 
-    $gameBox.on('next_player', (event, data) => {
-        if(data.currentPlayer === playerName) {
-            $gameBox.html('');
-            $gameBox.append('' +
-                '<h3>Write a word</h3>' +
-                '<form id="word-form">' +
-                '    <input type="text" id="word-input" name="word-input" required>' +
-                '    <button type="submit" id="submit-word">Send</button>' +
-                '</form>');
+    $player.on('next_player', (event, data) => {
+        if(data.playerName === playerName) {
+            player.showTurn().then(() => {
+                player.wordInput.keyup(function(){
+                    let text = $(this).val();
+                    let isPunctuation = text[0] === '.' || text[0] === ',';
+                    $(this).val(text.replace(
+                        isPunctuation ? /[^.,]/g : /[^A-Za-z]/g ,''
+                        ));
+                });
 
-            const $wordInput = $("#word-input");
+                player.wordForm.on('submit', (event) => {
+                    event.preventDefault();
+                    webSocket.send(JSON.stringify({
+                        'sender': playerName,
+                        'event': 'word_added',
+                        'data': {
+                            word: player.wordInput.val(),
+                        },
+                    }));
 
-            $wordInput.keyup(function(){
-                let text = $(this).val();
-                let isPunctuation = text[0] === '.' || text[0] === ',';
-                $(this).val(text.replace(
-                    isPunctuation ? /[^.,]/g : /[^A-Za-z]/g ,''
-                    ));
+                    player.wordInput.val('');
+                    player.showWait('Waiting for turn');
+                });
             });
-
-            $("#word-form").on('submit', (event) => {
-                event.preventDefault();
-                webSocket.send(JSON.stringify({
-                    'sender': playerName,
-                    'event': 'word_added',
-                    'data': {
-                        word: $wordInput.val(),
-                    },
-                }));
-
-                $wordInput.val('');
-            });
-        }
-        else {
-            $gameBox.html('');
-            $gameBox.html('' +
-                '<div class="spinner-grow text-secondary" role="status">' +
-                '   <span class="sr-only">Loading...</span>' +
-                '</div>');
         }
     });
 
-    $gameBox.on('game_closed', (event, data) => {
+    $player.on('game_closed', (event, data) => {
         console.log('Game closed!');
         window.location.replace('/join');
     });
@@ -70,23 +55,22 @@ $(document).ready(function() {
     // Events from backend
     webSocket.onmessage = function (event) {
         const message = JSON.parse(event.data);
-        $gameBox.trigger(message.event, [message.data]);
+        $player.trigger(message.event, [message.data]);
     }
 
     webSocket.onerror = function (event) {
         let countdown = 5;
-        $gameBox.html('');
-        $gameBox.html('' +
+        $player.transition('' +
             '<h3>Can\'t join game!</h3>' +
             '<p>Please check the room code and make sure the player name is not already in use</p>' +
             '<p id="countdown">' + countdown + '</p>');
-            setInterval(() => {
-                countdown--;
-                $("#countdown").html(countdown);
-            }, 1000);
-            setTimeout(() => {
-                window.location.replace('/join');
-            }, countdown*1000);
+        setInterval(() => {
+            countdown--;
+            $("#countdown").html(countdown);
+        }, 1000);
+        setTimeout(() => {
+            window.location.replace('/join');
+        }, countdown*1000);
     }
 
 

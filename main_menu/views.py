@@ -56,3 +56,59 @@ def connect_to_game(request):
         return JsonResponse({'detail': 'Game not found'}, status='400')
 
     return JsonResponse({'redirectUrl': f'/{active_game.game_name}/'}, status='200')
+
+
+def active_players(request):
+    if request.method == 'GET':
+        try:
+            active_game = ActiveGames.objects.get(
+                room_code=request.GET.get('roomCode'),
+                game_name=request.GET.get('gameName')
+            )
+        except ActiveGames.DoesNotExist:
+            return JsonResponse({'detail': 'Game not found'}, status='400')
+
+        return JsonResponse({'activePlayers': active_game.data.get('active_players')}, status='200')
+    return JsonResponse({'detail': f'Wrong request method used: {request.method}'}, status='403')
+
+
+def joined_players(request):
+    if request.method == 'GET':
+        try:
+            active_game = ActiveGames.objects.get(
+                room_code=request.GET.get('roomCode'),
+                game_name=request.GET.get('gameName')
+            )
+        except ActiveGames.DoesNotExist:
+            return JsonResponse({'detail': 'Game not found'}, status='400')
+
+        return JsonResponse({'joinedPlayers': active_game.data.get('joined_players')}, status='200')
+    return JsonResponse({'detail': f'Wrong request method used: {request.method}'}, status='403')
+
+
+def end_result(request):
+    if request.method == 'GET':
+        try:
+            active_game = ActiveGames.objects.get(
+                room_code=request.GET.get('roomCode'),
+                game_name=request.GET.get('gameName')
+            )
+        except ActiveGames.DoesNotExist:
+            return JsonResponse({'detail': 'Game not found'}, status='400')
+
+        return JsonResponse({'endResult': active_game.data.get('end_result')}, status='200')
+
+    elif request.method == 'UPDATE':
+        try:
+            active_game = ActiveGames.objects.get(
+                room_code=request.UPDATE.get('roomCode'),
+                game_name=request.UPDATE.get('gameName')
+            )
+        except ActiveGames.DoesNotExist:
+            return JsonResponse({'detail': 'Game not found'}, status='400')
+
+        active_game.data['end_result'] = request.UPDATE.get('endResult')
+        active_game.save()
+
+        return JsonResponse({'detail': 'End result saved'}, status='204')
+    return JsonResponse({'detail': f'Wrong request method used: {request.method}'}, status='403')
