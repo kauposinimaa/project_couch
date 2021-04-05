@@ -4,10 +4,15 @@ $(document).ready(function() {
     const $body = $("body");
     const player = new OWSPlayer(true);
     const $player = player.$box;
-    player.showWait('Waiting for the game to start');
-
     const webSocket = new WebSocket(
         'ws://' + window.location.host + '/' + gameName + '/' + roomCode + '/' + playerName);
+
+    if(gameStatus === 'in_game') {
+        player.startGame();
+    }
+    else {
+        player.showWait('Waiting for the game to start');
+    }
 
     // Variables
 
@@ -45,10 +50,16 @@ $(document).ready(function() {
         }
     });
 
-    $player.on('game_closed', (event, data) => {
-        console.log('Game closed!');
+    $player.on('end_game', (event) => {
+        console.log('Game ended');
+        player.endGame();
+    });
+
+    $player.on('close_game', (event) => {
         window.location.replace('/join');
     });
+
+
 
 
 

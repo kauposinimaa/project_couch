@@ -1,4 +1,5 @@
 START_GAME = 'start_game'
-PLAYER_JOINED = 'player_joined'
+CLOSE_GAME = 'close_game'
+END_GAME = 'end_game'
 PLAYER_DISCONNECTED = 'player_disconnected'
-GAME_CLOSED = 'game_closed'
+PLAYER_JOINED = 'player_joined'

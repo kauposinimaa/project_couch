@@ -32,7 +32,7 @@ $(document).ready(function(){
             let redirectUrl = response['redirectUrl'] + '?' + params.toString();
             window.location.replace(redirectUrl);
         }).catch((error) => {
-            $("#join-errors").html(error.status === 400 ? error.detail : 'Unexpected error!');
+            $("#join-errors").html(error.status < 500 ? error.detail : 'Unexpected error!');
         });
     });
 

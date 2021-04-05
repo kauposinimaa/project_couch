@@ -5,7 +5,7 @@ import importlib
 from django.utils.translation import gettext as _
 import games
 import os
-from .models import ActiveGames
+from .models import Games, Players
 from project_couch import status
 
 
@@ -47,64 +47,68 @@ def join_game(request):
 def connect_to_game(request):
     room_code = request.GET.get('roomCode').lower()
     player_name = request.GET.get('playerName')
+
     if not (room_code and player_name):
         return JsonResponse({'detail': 'Please provide room code and player name'}, status='400')
 
     try:
-        active_game = ActiveGames.objects.get(room_code=room_code)
-    except ActiveGames.DoesNotExist:
+        game = Games.objects.get(room_code=room_code)
+    except Games.DoesNotExist:
         return JsonResponse({'detail': 'Game not found'}, status='400')
 
-    return JsonResponse({'redirectUrl': f'/{active_game.game_name}/'}, status='200')
+    if game.status == status.NOT_ACTIVE:
+        return JsonResponse({'detail': "This game is not active"}, status='403')
+
+    player, created = Players.objects.get_or_create(name=player_name, game=game)
+    if created:
+        if game.status == status.IN_GAME:
+            player.delete()
+            return JsonResponse({'detail': "Can't join this game"}, status='403')
+    else:
+        if player.status != status.NOT_ACTIVE:
+            return JsonResponse({'detail': 'This name is taken'}, status='403')
+
+    player.status = game.status
+    player.save()
+
+    return JsonResponse({'redirectUrl': f'/{game.name}/'}, status='200')
 
 
-def active_players(request):
+def players(request):
     if request.method == 'GET':
         try:
-            active_game = ActiveGames.objects.get(
+            game = Games.objects.get(
                 room_code=request.GET.get('roomCode'),
-                game_name=request.GET.get('gameName')
+                name=request.GET.get('gameName')
             )
-        except ActiveGames.DoesNotExist:
+        except Games.DoesNotExist:
             return JsonResponse({'detail': 'Game not found'}, status='400')
 
-        return JsonResponse({'activePlayers': active_game.data.get('active_players')}, status='200')
-    return JsonResponse({'detail': f'Wrong request method used: {request.method}'}, status='403')
+        players_in_game = Players.objects.filter(game=game, status=status.IN_GAME)
 
-
-def joined_players(request):
-    if request.method == 'GET':
-        try:
-            active_game = ActiveGames.objects.get(
-                room_code=request.GET.get('roomCode'),
-                game_name=request.GET.get('gameName')
-            )
-        except ActiveGames.DoesNotExist:
-            return JsonResponse({'detail': 'Game not found'}, status='400')
-
-        return JsonResponse({'joinedPlayers': active_game.data.get('joined_players')}, status='200')
+        return JsonResponse({'players': [player.name for player in players_in_game]}, status='200')
     return JsonResponse({'detail': f'Wrong request method used: {request.method}'}, status='403')
 
 
 def end_result(request):
     if request.method == 'GET':
         try:
-            active_game = ActiveGames.objects.get(
+            active_game = Games.objects.get(
                 room_code=request.GET.get('roomCode'),
                 game_name=request.GET.get('gameName')
             )
-        except ActiveGames.DoesNotExist:
+        except Games.DoesNotExist:
             return JsonResponse({'detail': 'Game not found'}, status='400')
 
         return JsonResponse({'endResult': active_game.data.get('end_result')}, status='200')
 
     elif request.method == 'UPDATE':
         try:
-            active_game = ActiveGames.objects.get(
+            active_game = Games.objects.get(
                 room_code=request.UPDATE.get('roomCode'),
                 game_name=request.UPDATE.get('gameName')
             )
-        except ActiveGames.DoesNotExist:
+        except Games.DoesNotExist:
             return JsonResponse({'detail': 'Game not found'}, status='400')
 
         active_game.data['end_result'] = request.UPDATE.get('endResult')

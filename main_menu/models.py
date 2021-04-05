@@ -5,11 +5,7 @@ from project_couch import status
 
 
 def get_default_game_data():
-    return {'joined_players': [],
-            'active_players': [],
-            'options': {
-                'allow_new_players': False,
-            },
+    return {'options': {},
             'end_result': ''}
 
 
@@ -17,12 +13,18 @@ def get_default_game_data():
 def generate_room_code():
     while True:
         room_code = ''.join(random.choice(string.ascii_lowercase) for _ in range(5)).lower()
-        if not ActiveGames.objects.filter(room_code=room_code).exists():
+        if not Games.objects.filter(room_code=room_code).exists():
             return room_code
 
 
-class ActiveGames(models.Model):
-    game_name = models.CharField(max_length=255)
+class Games(models.Model):
+    name = models.CharField(max_length=255)
     room_code = models.CharField(max_length=5, unique=True, default=generate_room_code)
     data = models.JSONField(default=get_default_game_data)
+    status = models.CharField(max_length=255, default=status.IN_LOBBY)
+
+
+class Players(models.Model):
+    name = models.CharField(max_length=255)
+    game = models.ForeignKey(Games, on_delete=models.CASCADE)
     status = models.CharField(max_length=255, default=status.IN_LOBBY)

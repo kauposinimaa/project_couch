@@ -19,7 +19,7 @@ class GameBox {
             '   </div>' +
             '</div>');
 
-        this.gameTimer = 100;
+        this.gameTimer = 60;
         this.isShown = show;
 
 
@@ -104,6 +104,14 @@ class OWSHost extends GameBox {
         return this.innerHTML.find('#current-progress');
     }
 
+    get $timer() {
+        return this.innerHTML.find('#timer');
+    }
+
+    get time() {
+        return this.innerHTML.find('#time.selection button.selected').text();
+    }
+
     // Methods
     showLobby() {
         return new Promise((resolve, reject) => {
@@ -113,7 +121,14 @@ class OWSHost extends GameBox {
                 '       <h1>One Word Story</h1>' +
                 '       <h3>Room code: <span id="room-code">' + roomCode.toUpperCase() + '</span></h3>' +
                 '       <h3>Players in lobby: <span id="player-count">0</span></h3>' +
-                '       <button id="start-game">Start game</button>' +
+                '       <div id="time" class="selection">' +
+                '           <button class="selected">10</button>' +
+                '           <button class="">120</button>' +
+                '           <button class="">180</button>' +
+                '           <button class="">240</button>' +
+                '           <button class="">300</button>' +
+                '       </div>' +
+                '       <button id="start-game" class="w-100 primary">Start game</button>' +
                 '   </div>' +
                 '   <div class="col-xl-7 col-lg-5 col-md-4 col-sm-12" id="players">' +
                 '       ' +
@@ -121,6 +136,19 @@ class OWSHost extends GameBox {
                 '</div>'
                 ))
             .then(() => {
+                $('#time.selection button').each((i, button) => {
+                    $(button).on('click', (event) => {
+                        $('#time.selection button').each((i, btn) => {
+                            $(btn).removeClass('selected');
+                        });
+
+                        if(!$(button).hasClass('selected')) {
+                            $(button).addClass('selected');
+                        }
+                        this.gameTimer = parseInt($(button).text());
+                    });
+                });
+
                 resolve();
             })
         });
@@ -134,6 +162,7 @@ class OWSHost extends GameBox {
                 '   <div class="col-12">' +
                 '       <h1>One Word Story</h1>' +
                 '       <h3>Start adding words one by one to create a masterpiece</h3>' +
+                '       <h3 class="text-center py-3">Time left: <span id="timer"></span></h3>' +
                 '   </div>' +
                 '   <div class="col-12">' +
                 '        <div class="text-border p-3 bg-white">' +
@@ -142,10 +171,24 @@ class OWSHost extends GameBox {
                 '   </div>' +
                 '</div>'))
             .then(() => {
+                this.startTimer(this.gameTimer);
                 resolve();
             });
         });
+    }
 
+    startTimer(time) {
+        let timeLeft = parseInt(time);
+        console.log(this.innerHTML.find('#timer'));
+        this.innerHTML.find('#timer').html(timeLeft);
+        var interval = setInterval(() => {
+            timeLeft--;
+            this.innerHTML.find('#timer').html(timeLeft);
+            if(timeLeft === 0) {
+                clearInterval(interval);
+                this.box.trigger('times_up');
+            }
+        }, 1000);
     }
 
     addNewPlayer(name) {
@@ -165,7 +208,35 @@ class OWSHost extends GameBox {
     }
 
     endGame() {
+        return new Promise((resolve, reject) => {
+            let currentText = this.currentText.html();
+            this.transition($('' +
+                '<div class="row">' +
+                '   <div class="col-12">' +
+                '       <h1>One Word Story</h1>' +
+                "       <h3>Here's your result:</h3>" +
+                '   </div>' +
+                '   <div class="col-12">' +
+                '        <div class="text-border p-3 bg-white">' +
+                '           <p id="current-progress">' + currentText + '</p>' +
+                '        </div>' +
+                '   </div>' +
+                '   <div class="col-12">' +
+                '       <button id="main-menu" class="pr-3">Main menu</button>' +
+                '       <button id="play-again">Play again</button>' +
+                '   </div>' +
 
+                '</div>'))
+            .then(() => {
+                this.innerHTML.find('#main-menu').on('click', () => {
+                    window.location.replace('/');
+                });
+                this.innerHTML.find('#play-again').on('click', () => {
+                    this.box.trigger('restart');
+                });
+                resolve();
+            });
+        });
     }
 }
 
@@ -218,6 +289,12 @@ class OWSPlayer extends GameBox {
     }
 
     endGame() {
-
+        return new Promise((resolve, reject) => {
+            this.transition($('' +
+                "<h3>Time's up!</h3>"))
+            .then(() => {
+                resolve();
+            });
+        });
     }
 }

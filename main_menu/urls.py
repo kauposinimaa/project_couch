@@ -5,7 +5,6 @@ urlpatterns = [
     path('', views.game_selection),
     path('join', views.join_game),
     path('connect', views.connect_to_game),
-    path('active_players', views.active_players),
-    path('joined_players', views.joined_players),
+    path('players', views.players),
     path('end_result', views.end_result),
 ]
