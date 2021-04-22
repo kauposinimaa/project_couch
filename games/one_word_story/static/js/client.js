@@ -27,9 +27,9 @@ $(document).ready(function() {
             player.showTurn().then(() => {
                 player.wordInput.keyup(function(){
                     let text = $(this).val();
-                    let isPunctuation = text[0] === '.' || text[0] === ',';
+                    let isPunctuation = text[0] === '.' || text[0] === ',' || text[0] === '!' || text[0] === '?';
                     $(this).val(text.replace(
-                        isPunctuation ? /[^.,]/g : /[^A-Za-z]/g ,''
+                        isPunctuation ? /[^.,!?]/g : /[^A-Za-z0-9öäüõÖÄÜÕ\-:'"]/g ,''
                         ));
                 });
 
@@ -58,6 +58,18 @@ $(document).ready(function() {
     $player.on('close_game', (event) => {
         window.location.replace('/join');
     });
+
+    // $player.on('times_up', (event) => {
+    //     webSocket.send(JSON.stringify({
+    //         'sender': playerName,
+    //         'event': 'word_added',
+    //         'data': {
+    //             word: '',
+    //         },
+    //     }));
+    //
+    //     player.showWait('Waiting for turn');
+    // });
 
 
 

@@ -109,6 +109,10 @@ div.gamebox input:focus {
     box-shadow: 0 0 0 0.2rem #343434;
 }
 
+div.gamebox form button {
+    display: block;
+}
+
 div.gamebox button {
     display: inline-block;
     font-weight: 400;
@@ -169,4 +173,10 @@ div.text-border {
 
 .bg-white {
     background-color: white;
+}
+
+
+/* ID specific */
+#current-progress {
+    font-size: 24px;
 }

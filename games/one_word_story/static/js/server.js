@@ -10,6 +10,7 @@ $(document).ready(function() {
     // Variables
     let prevPlayerList;
     let currentPlayer;
+    let playerList = [];
     function getNextPlayer() {
         return new Promise((resolve, reject) => {
             makeFetch({
@@ -20,7 +21,8 @@ $(document).ready(function() {
                     gameName: gameName,
                 },
             }).then((response) => {
-                let playerList = response['players'];
+                console.log(response['players']);
+                playerList = response['players'];
                 if(!prevPlayerList) {  // If this is the first turn
                     prevPlayerList = playerList;
                     currentPlayer = playerList[0];
@@ -58,6 +60,7 @@ $(document).ready(function() {
 
     $host.on('player_disconnected', (event, data) => {
         host.removePlayer(data.playerName);
+        console.log(currentPlayer);
         if(currentPlayer === data.playerName) {
             getNextPlayer().then((name) => {
                 webSocket.send(JSON.stringify({
@@ -89,8 +92,33 @@ $(document).ready(function() {
 
     $host.on('word_added', (event, data) => {
         let word = data.word;
-        let isPunctuation = word.includes('.') || word.includes(',');
-        host.addWord(isPunctuation ? word : (' ' + word));
+        let isPunctuation = ['.', ',', '!', '?'].includes(word[0]);
+        console.log(isPunctuation);
+
+        // All this to display a word correctly
+        if(host.currentText.html().length === 0) {
+            if(!isPunctuation) {
+                host.addWord(word.charAt(0).toUpperCase() + word.slice(1).toLowerCase());
+            }
+        }
+        else {
+            if(!isPunctuation) {
+                if([',', '.', '!', '?'].includes(host.currentText.html().slice(-1))) {
+                    if(host.currentText.html().slice(-1) === ',') {
+                        host.addWord(' ' + word.toLowerCase());
+                    }
+                    else {
+                        host.addWord(' ' + word.charAt(0).toUpperCase() + word.slice(1).toLowerCase());
+                    }
+                }
+                else {
+                    host.addWord(' ' + word.toLowerCase());
+                }
+            }
+            else {
+                host.addWord(word);
+            }
+        }
 
         getNextPlayer().then((name) => {
             webSocket.send(JSON.stringify({
@@ -104,12 +132,32 @@ $(document).ready(function() {
     });
 
     $host.on('times_up', (event) => {
+        let endResult = host.currentText.html();
+        // Notify everybody, that game ended
         webSocket.send(JSON.stringify({
             sender: playerName,
             event: 'end_game',
             data: {},
         }));
+        // End game
         host.endGame();
+
+        // Save result to db
+        makeFetch({
+            url: '/' + gameName + '/' + 'save_result',
+            method: 'POST',
+            data: {
+                'gameName': gameName,
+                'roomCode': roomCode,
+                'endResult': endResult,
+            }
+        }).catch((error) => {
+            setTimeout(() => {
+                host.innerHTML.append('' +
+                    '<p class="pt-4">' + error.detail + '</p>');
+                console.log(error.detail);
+            }, 1000);
+        });
     });
 
     $host.on('restart', (event, data) => {

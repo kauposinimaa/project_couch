@@ -20,6 +20,23 @@ async function selectedAnimation(elem){
     isRainbow = false;
 }
 
+// Gets value from cookie header
+function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = cookies[i].trim();
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
 // Function for Fetch API
 function makeFetch({url, method, data = {}}){
     return new Promise((resolve, reject) => {
@@ -33,6 +50,7 @@ function makeFetch({url, method, data = {}}){
             method: method,
             headers: {
                 'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
             },
             body: ['GET', 'HEAD'].includes(method) ? null : JSON.stringify(data),
         })

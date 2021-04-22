@@ -19,8 +19,10 @@ class GameBox {
             '   </div>' +
             '</div>');
 
-        this.gameTimer = 60;
-        this.isShown = show;
+        this.fadeTime = 500;
+        this.showTime = 1100;
+
+        this.gameTimer = 10;
 
 
         // Adds game box to body
@@ -30,7 +32,7 @@ class GameBox {
             $("body").append(this.$box);
             setTimeout(() => {
                 this.$box.css('transform', 'scale(1)');
-            }, 1100);
+            }, this.showTime);
         }
 
     }
@@ -54,7 +56,7 @@ class GameBox {
         $("body").append(this.$box);
         setTimeout(() => {
             this.$box.css('transform', 'scale(1)');
-        }, 1100);
+        }, this.showTime);
     }
 
     setOpacity(value) {  // 0-1
@@ -62,7 +64,7 @@ class GameBox {
             this.$innerHTML.css('opacity', value);
             setTimeout(() => {
                 resolve();
-            }, 1000);
+            }, this.fadeTime);
         });
     }
 
@@ -77,6 +79,19 @@ class GameBox {
                 }, delay);
             });
         });
+    }
+
+    startTimer(element, time) {
+        let timeLeft = parseInt(time);
+        $(element).html(timeLeft);
+        var interval = setInterval(() => {
+            timeLeft--;
+            $(element).html(timeLeft);
+            if(timeLeft === 0) {
+                clearInterval(interval);
+                this.box.trigger('times_up');
+            }
+        }, 1000);
     }
 }
 
@@ -171,24 +186,10 @@ class OWSHost extends GameBox {
                 '   </div>' +
                 '</div>'))
             .then(() => {
-                this.startTimer(this.gameTimer);
+                this.startTimer(this.innerHTML.find('#timer'), this.gameTimer);
                 resolve();
             });
         });
-    }
-
-    startTimer(time) {
-        let timeLeft = parseInt(time);
-        console.log(this.innerHTML.find('#timer'));
-        this.innerHTML.find('#timer').html(timeLeft);
-        var interval = setInterval(() => {
-            timeLeft--;
-            this.innerHTML.find('#timer').html(timeLeft);
-            if(timeLeft === 0) {
-                clearInterval(interval);
-                this.box.trigger('times_up');
-            }
-        }, 1000);
     }
 
     addNewPlayer(name) {
@@ -278,11 +279,14 @@ class OWSPlayer extends GameBox {
         return new Promise((resolve, reject) => {
             this.transition($('' +
                 '<h3>Write a word</h3>' +
-                '<form id="word-form">' +
+                '<form id="word-form" autocomplete="off">' +
                 '    <input type="text" id="word-input" name="word-input" required>' +
-                '    <button type="submit" id="submit-word">Send</button>' +
+                '       <h4 class="py-3">Time left: <span id="timer"></span></h4>' +
+                '    <button type="submit" class="w-100" id="submit-word">Send</button>' +
                 '</form>'))
             .then(() => {
+                this.wordInput.focus();
+                this.startTimer(this.innerHTML.find('#timer'), 10);
                 resolve();
             });
         });

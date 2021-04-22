@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 import os
 from pathlib import Path
+import importlib
+import games
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -41,6 +43,7 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     '192.168.1.160',
     '192.168.1.162',
+    '192.168.43.236',
 ]
 
 
@@ -169,8 +172,12 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static/")
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'project_couch', 'static'),
     os.path.join(BASE_DIR, 'main_menu', 'static'),
-    os.path.join(BASE_DIR, 'games', 'static'),
+    os.path.join(BASE_DIR, 'assets'),
 ]
+
+for item in os.listdir(os.path.dirname(games.__file__)):
+    if not item.startswith("__"):
+        STATICFILES_DIRS += os.path.join(BASE_DIR, 'games', item, 'static'),
 
 STATIC_URL = '/static/'
 
@@ -180,8 +187,6 @@ MEDIA_URL = '/media/'
 
 FIRST_DAY_OF_WEEK = 1  # Monday
 
-import importlib
-import games
 game_modules = [f'games.{item}' for item in os.listdir(os.path.dirname(games.__file__)) if not item.startswith("__")]
 for module_str in game_modules:
     INSTALLED_APPS.append(module_str)

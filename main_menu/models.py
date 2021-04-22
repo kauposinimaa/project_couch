@@ -6,7 +6,7 @@ from project_couch import status
 
 def get_default_game_data():
     return {'options': {},
-            'end_result': ''}
+            'end_result': []}
 
 
 # Generates a unique room code
